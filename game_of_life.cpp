@@ -1,75 +1,194 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
+#include <string.h>
+
+#define GRID_X  20;
+#define GRID_Y  20;
 
 using namespace std;
-const int rows = 20; // for grid size
-const int cols = 20; // for grid size
 
-// Function to print the grid
-    void printGrid(int grid[rows][cols]) 
-    {
-        for (int i = 0; i < rows; ++i) 
-        {
-            for (int j = 0; j < cols; ++j)
-             {
-                cout << (grid[i][j] ) << ' ';
-            }
-        cout << endl;
-        }
-    }
-int main() {
-    
-    int generations;
-    int number_of_cell;
-    int cord1[number_of_cell];
-    int cord2[number_of_cell];
-    
+struct coordinate {
+    int x;
+    int y;
+};
 
-    fstream file;
-    file.open("game_of_life.txt", ios::out | ios::in);
-
-    cout << "Enter number of generations: ";
-    cin >> generations;
-    file << generations << endl; // write on file
-
-    cout << "Enter number of cells to be alive: ";
-    cin >> number_of_cell;
-    file << number_of_cell << endl; // write on file
-
-    cout << "Enter coordinates:" << endl;
-    for (int i = 0; i < number_of_cell; i++) {
-        cin >> cord1[i];
-        cin >> cord2[i];
-        file << cord1[i] << " " << cord2[i] << endl;//write on file
-    }
-
-    cout << "Reading from file" << endl;
-    file >> generations; // read on file
-    file >> number_of_cell; // read on file
-
-    cout << "Generations: " << generations << "\nNumber of cells: " << number_of_cell << endl;
-    cout << "Coordinates:" << endl;
-    for (int i = 0; i < number_of_cell; i++) {
-        file >> cord1[i] >> cord2[i];
-        
-        cout << cord1[i] << " " << cord2[i] << endl;
-    }
- 
-  
-    int grid[rows][cols] = {0};
-    for (int i = 0; i < number_of_cell; ++i) {
-        int x = cord1[i];
-        int y = cord2[i];
-        if (x >= 0 && x < rows && y >= 0 && y < cols) {
-            grid[x][y] = 1; // Set the cell to alive
-        }
-    }
-    
-    
-printGrid(grid);
+void start();
+void read_input_file(string file_name, int grid[20][20], coordinate* sec, int& last);
+string get_user_input();
+void display(int grid[20][20]);
+void init_sec(coordinate[100], int last); 
+void display_coordinates(coordinate* coordinates, int count);
+void find_dead_neihbor(int grid[20][20],coordinate target ,coordinate* dead, int & count);
+void insert_dead(int grid[20][20], int x, int y, coordinate* dead, int & count);
 
 
-    file.close();
+int main()
+{
+    start();
     return 0;
+}
+
+void start()
+{
+    int grid[20][20] = {0};
+    coordinate sec[100];
+    int last = 0;
+    coordinate dead[300];
+    int dead_counter = 0; 
+    string file_name = get_user_input();
+    read_input_file(file_name, grid, sec, last);
+    display(grid);
+    display_coordinates(sec,last);
+    for(int i = 0; i < last; i++)
+    {
+        find_dead_neihbor(grid,sec[i],dead,dead_counter);
+    }
+    display_coordinates(dead, dead_counter);
+}
+
+// get input file name from the user
+string get_user_input()
+{
+    string file_name;
+    cout << "Enter file name: ";
+    cin >> file_name;
+    cout << file_name << endl;
+    return file_name;
+}
+
+// read input from file
+void read_input_file(string file_name, int grid[20][20], coordinate* sec, int& last)
+{
+    ifstream file;
+    int generation;
+    int number_of_cell;
+    file.open(file_name.c_str());
+
+    if (file.is_open())
+    {
+        int x, y; 
+        file >> generation;
+        file >> number_of_cell;
+        for (int i = 0; i < number_of_cell; i++)
+        {
+            coordinate alive;
+            file >> x;
+            file >> y;
+            grid[x][y] = 1;
+            alive.x = x;
+            alive.y = y;
+            sec[i] = alive;
+            last++;  
+        }
+    }
+    file.close(); 
+}
+// display grid
+void display(int grid[20][20])
+{
+    for (int i = 0; i < 20; i++)
+    {
+        for(int j = 0; j < 20; j++)
+        {
+            cout << grid[i][j] << "\t";
+        }
+        cout << endl;
+    }
+}
+// initialize secondary array
+void init_sec(coordinate[100], int last)
+{
+
+} 
+// function for display secondary and neighbor array 
+void display_coordinates(coordinate* coordinates, int count)
+{
+    for(int i = 0; i < count; i++)
+    {
+        cout << "{" << coordinates[i].x << ", " << coordinates[i].y << "}";
+    }
+    cout << endl;
+}
+// function for finding dead neighborhood
+void find_dead_neihbor(int grid[20][20], coordinate target, coordinate* dead, int & count)
+{
+    insert_dead(grid, target.x - 1, target.y - 1,dead,count);
+    int x = target.x - 1;
+    int y = target.y - 1;
+   if (grid[x][y] == 0 && x >= 0 && y >= 0)
+   {
+        coordinate die;
+        die.x = x;
+        die.y = y;
+        dead[count++] = die;
+        
+   } 
+   if (grid[target.x][target.y - 1] == 0 && (target.x) >= 0 && (target.y - 1) >= 0)
+   {
+        coordinate die;
+        die.x = target.x;
+        die.y = target.y - 1;
+        dead[count++] = die;
+        
+   } 
+   if (grid[target.x + 1][target.y - 1] == 0 && (target.x + 1) >= 0 && (target.y - 1) >= 0)
+   {
+        coordinate die;
+        die.x = target.x + 1;
+        die.y = target.y - 1;
+        dead[count++] = die;
+        
+   } 
+   if (grid[target.x - 1][target.y] == 0 && (target.x - 1) >= 0 && (target.y) >= 0)
+   {
+        coordinate die;
+        die.x = target.x - 1;
+        die.y = target.y;
+        dead[count++] = die;
+        
+   } 
+   if (grid[target.x + 1][target.y] == 0 && (target.x + 1) >= 0 && (target.y) >= 0)
+   {
+        coordinate die;
+        die.x = target.x + 1;
+        die.y = target.y;
+        dead[count++] = die;
+        
+   } 
+   if (grid[target.x - 1][target.y + 1] == 0 && (target.x - 1) >= 0 && (target.y + 1) >= 0)
+   {
+        coordinate die;
+        die.x = target.x - 1;
+        die.y = target.y + 1;
+        dead[count++] = die;
+        
+   } 
+   if (grid[target.x][target.y + 1] == 0 && (target.x) >= 0 && (target.y + 1) >= 0)
+   {
+        coordinate die;
+        die.x = target.x;
+        die.y = target.y + 1;
+        dead[count++] = die;
+        
+   } 
+   if (grid[target.x + 1][target.y + 1] == 0 && (target.x + 1) >= 0 && (target.y + 1) >= 0)
+   {
+        coordinate die;
+        die.x = target.x + 1;
+        die.y = target.y + 1;
+        dead[count++] = die;
+        
+   } 
+}
+
+void insert_dead(int grid[20][20], int x, int y, coordinate* dead, int & count)
+{
+    if (grid[x][y] == 0 && x >= 0 && y >= 0)
+   {
+        coordinate die;
+        die.x = x;
+        die.y = y;
+        dead[count++] = die;
+        
+   }
 }
