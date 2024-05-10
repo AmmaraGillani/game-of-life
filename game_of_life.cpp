@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string.h>
+#include <vector>
 
 #define GRID_X  20
 #define GRID_Y  20
@@ -18,17 +19,21 @@ void start();
 void read_input_file(string file_name, int grid[GRID_X][GRID_Y], coordinate* sec, int& last, int& generation);
 string get_user_input();
 void display(int grid[GRID_X][GRID_Y]);
-void display_coordinates(coordinate* coordinates, int count);
+void display_coordinates(coordinate coordinates[], int count);
 void find_dead_neihbor(int grid[GRID_X][GRID_Y], coordinate target, coordinate* dead, int & count);
 void insert_dead(int grid[GRID_X][GRID_Y], int x, int y, coordinate* dead, int & count);
 int is_exist(coordinate* arr, int count, int x, int y);
 int is_neighbor(int x1, int y1, int x2, int y2);
 int count_neighbors(int grid[GRID_X][GRID_Y], coordinate target);
-void apply_rule_birth(int grid[GRID_X][GRID_Y], coordinate* dead, int dead_counter, coordinate *birth_result, int birth_result_counter);
-void apply_rule_survival(int grid[GRID_X][GRID_Y], coordinate *dead, int dead_counter);
-void apply_rule_loneliness(int grid[GRID_X][GRID_Y], coordinate *dead, int dead_counter);
-void apply_rule_overcrowding(int grid[GRID_X][GRID_Y], coordinate *dead, int dead_counter);
-void apply_rules (int grid[GRID_X][GRID_Y], coordinate* sec, int last, coordinate *dead,int dead_counter);
+vector<coordinate> apply_rule_birth(int grid[GRID_X][GRID_Y], coordinate *dead, int dead_counter);
+vector<coordinate> apply_rule_survival(int grid[GRID_X][GRID_Y], coordinate *sec, int last);
+vector<coordinate> apply_rule_loneliness(int grid[GRID_X][GRID_Y], coordinate *dead, int dead_counter);
+vector<coordinate> apply_rule_overcrowding(int grid[GRID_X][GRID_Y], coordinate *dead, int dead_counter);
+void apply_rules (int grid[GRID_X][GRID_Y], coordinate* sec, int last, coordinate dead[],int &dead_counter);
+int delete_element(coordinate arr[], int &size, coordinate x);
+void delete_elements(vector<coordinate> delete_items, coordinate arr[], int &size);
+void add_element(coordinate arr[], int &size, vector<coordinate>new_items);
+void display_coordinate_count(int grid[GRID_X][GRID_Y], coordinate cord[], int size);
 
 int main() {
     start();
@@ -49,32 +54,33 @@ void start() {
     string file_name = "input2.txt";
     read_input_file(file_name, grid, sec, last, generation);
     display(grid);
-    display_coordinates(sec, last);
     for(int i = 0; i < last; i++) 
     {
         find_dead_neihbor(grid, sec[i], dead, dead_counter);
     }
-    display_coordinates(dead, dead_counter);
-    for (int i = 0; i < last; i++) {
+
+    for (int i = 0; i < last; i++) 
+    {
         live_count[i] = count_neighbors(grid, sec[i]);
-        live_counter++;
-        
+        live_counter++;  
     }
 
-     cout << " Display of Secondary-array and count" << endl;
-    for (int i = 0; i < live_counter; i++) {
-        cout<< "(" << sec[i].x << ", " << sec[i].y << "): " << live_count[i] << "\t";
+    // cout << " Display of Secondary-array and count" << endl;
+    // for (int i = 0; i < live_counter; i++)
+    // {
+    //     cout<< "(" << sec[i].x << ", " << sec[i].y << "): " << live_count[i] << "\t";
+    // }
+    //cout<< endl;
+    display_coordinate_count(grid, sec, last);
+    display_coordinate_count(grid, dead, dead_counter);
+    // cout << " Display of Neighbor-array and count" << endl;
+    //  for (int i = 0; i < dead_counter; i++)
+    //   {
+    //     int dead_neighbors = count_neighbors(grid, dead[i]);
+    //     cout << "(" << dead[i].x << ", " << dead[i].y << "): " << dead_neighbors << "\t";
         
-    }
-    cout<< endl;
-    cout << " Display of Neighbor-array and count" << endl;
-     for (int i = 0; i < dead_counter; i++)
-      {
-        int dead_neighbors = count_neighbors(grid, dead[i]);
-        cout << "(" << dead[i].x << ", " << dead[i].y << "): " << dead_neighbors << "\t";
-        
-      }
-    cout << endl;
+    //   }
+    // cout << endl;
     for (int i = 0; i < 1; i++)
     {
         apply_rules(grid, sec, last, dead, dead_counter);
@@ -128,7 +134,7 @@ void display(int grid[GRID_X][GRID_Y]) {
 
 
 // function for display secondary and neighbor array
-void display_coordinates(coordinate* coordinates, int count) {
+void display_coordinates(coordinate coordinates[], int count) {
     for(int i = 0; i < count; i++) {
         cout << "{" << coordinates[i].x << ", " << coordinates[i].y << "}";
     }
@@ -192,64 +198,124 @@ int count_neighbors(int grid[GRID_X][GRID_Y], coordinate target) {
     return count;
 }
 
-void apply_rule_birth(int grid[GRID_X][GRID_Y], coordinate *dead, int dead_counter, coordinate *birth_result, int birth_result_count)
+vector<coordinate> apply_rule_birth(int grid[GRID_X][GRID_Y], coordinate *dead, int dead_counter)
 {
+    vector<coordinate> birth_result;
     for(int i = 0; i < dead_counter; i++)
     {
         int dead_neighbors = count_neighbors(grid, dead[i]);
         if (dead_neighbors == 3)
         {
-            cout << dead[i].x << "," << dead[i].y << endl;
-            birth_result_count++;
+            birth_result.push_back(dead[i]);
+            
         }
-    
     }
+    return birth_result;
 }
-void apply_rule_survival(int grid[GRID_X][GRID_Y], coordinate *sec, int last)
+vector<coordinate> apply_rule_survival(int grid[GRID_X][GRID_Y], coordinate *sec, int last)
 {
+    vector<coordinate> survival_result;
     for(int i = 0; i < last; i++)
     {
         int sec_counter = count_neighbors(grid, sec[i]);
         if (sec_counter == 2 || sec_counter == 3)
         {
-            cout << sec[i].x << "," << sec[i].y << endl;
+            survival_result.push_back(sec[i]);
+            
         }
     
     }
+    return survival_result;
 }
-void apply_rule_loneliness(int grid[GRID_X][GRID_Y], coordinate *sec, int last)
+vector<coordinate> apply_rule_loneliness(int grid[GRID_X][GRID_Y], coordinate *sec, int last)
 {
+    vector<coordinate> loneliness_result;
     for(int i = 0; i < last; i++)
     {
         int sec_counter = count_neighbors(grid, sec[i]);
         if (sec_counter == 0 || sec_counter == 1)
         {
-            cout << sec[i].x << "," << sec[i].y << endl;
+            loneliness_result.push_back(sec[i]);
         }
     
     }
+    return loneliness_result;
 }
 
-void apply_rule_overcrowding(int grid[GRID_X][GRID_Y], coordinate *sec, int last)
+vector<coordinate> apply_rule_overcrowding(int grid[GRID_X][GRID_Y], coordinate *sec, int last)
 {
+    vector<coordinate> overcrowding_result;
     for(int i = 0; i < last; i++)
     {
         int sec_counter = count_neighbors(grid, sec[i]);
         if (sec_counter > 3)
         {
-            cout << sec[i].x << "," << sec[i].y << endl;
+            overcrowding_result.push_back(sec[i]);
         }
     
     }
+    return overcrowding_result;
 }
 
-void apply_rules (int grid[GRID_X][GRID_Y], coordinate* sec, int last, coordinate *dead,int dead_counter)
+void apply_rules (int grid[GRID_X][GRID_Y], coordinate* sec, int last, coordinate dead[],int &dead_counter)
 {
-    coordinate *birth_result;
-    int birth_result_count = 0;
-    
-    apply_rule_birth(grid, dead, dead_counter, birth_result, birth_result_count);
-    apply_rule_survival(grid, sec, last);
-    apply_rule_loneliness(grid, sec, last);
-    apply_rule_overcrowding(grid, sec, last);
+    vector<coordinate> birth_result = apply_rule_birth (grid, dead, dead_counter);
+    vector<coordinate> survival_result = apply_rule_survival(grid, sec, last);
+    vector<coordinate> loneliness_result =  apply_rule_loneliness(grid, sec, last);
+    vector<coordinate> overcrowding_result = apply_rule_overcrowding(grid, sec, last);
+    // remove birth from neigbor array
+    delete_elements(birth_result, dead, dead_counter);
+    add_element(sec, last, birth_result);
+    display_coordinates(sec, last);
+    // remove dead from secondary array
+    delete_elements(loneliness_result, sec, last);
+    cout << endl; 
+}
+//delete 
+int delete_element(coordinate arr[], int &size, coordinate x) 
+{ 
+    // Search x in array 
+    int i; 
+    for (i = 0; i < size; i++) 
+        if (arr[i].x == x.x && arr[i].y == x.y) 
+            break; 
+  
+    // If x found in array 
+    if (i < size) { 
+        // reduce size of array and move all 
+        // elements on space ahead 
+        size = size - 1; 
+        for (int j = i; j < size; j++) 
+            arr[j] = arr[j + 1]; 
+    } 
+  
+    return size; 
+}
+
+void delete_elements(vector<coordinate> delete_items, coordinate arr[], int &size)
+{
+    for(int i = 0; i < delete_items.size(); i++)
+    {
+        delete_element(arr, size, delete_items.at(i));
+        
+    }
+}
+
+void add_element(coordinate arr[], int &size, vector<coordinate>new_items)
+{
+    for( int i = 0; i < new_items.size(); i++)
+    {
+        arr[size++] = new_items.at(i);
+    }
+}
+
+void display_coordinate_count(int grid[GRID_X][GRID_Y], coordinate cord[], int size)
+{
+     for (int i = 0; i < size; i++)
+      {
+        int count = count_neighbors(grid, cord[i]);
+        cout << "(" << cord[i].x << ", " << cord[i].y << "): " << count << "\t";
+        
+      }
+      cout << endl;
 }
