@@ -34,6 +34,9 @@ int delete_element(coordinate arr[], int &size, coordinate x);
 void delete_elements(vector<coordinate> delete_items, coordinate arr[], int &size);
 void add_element(coordinate arr[], int &size, vector<coordinate>new_items);
 void display_coordinate_count(int grid[GRID_X][GRID_Y], coordinate cord[], int size);
+void simulate_generation(int grid[GRID_X][GRID_Y], coordinate sec[], int &last, coordinate nei[], int &nei_size, int generations);
+void populated_grid(int grid[GRID_X][GRID_Y], coordinate sec[], int last);
+void fill_nei(int grid[GRID_X][GRID_Y], coordinate sec[], int last, coordinate nei[], int &nei_size);
 
 int main() {
     start();
@@ -44,47 +47,22 @@ void start() {
     int grid[GRID_X][GRID_Y] = {0};
     coordinate sec[SEC_SIZE];
     int last = 0;
-    coordinate dead[NEI_SIZE];
-    int dead_counter = 0;
-    int live_count[SEC_SIZE];
-    int live_counter = 0;
+    coordinate nei[NEI_SIZE];
+    int nei_size = 0;
     int generation = 0;
     
     // string file_name = get_user_input();
     string file_name = "input2.txt";
     read_input_file(file_name, grid, sec, last, generation);
-    display(grid);
-    for(int i = 0; i < last; i++) 
-    {
-        find_dead_neihbor(grid, sec[i], dead, dead_counter);
-    }
-
-    for (int i = 0; i < last; i++) 
-    {
-        live_count[i] = count_neighbors(grid, sec[i]);
-        live_counter++;  
-    }
-
-    // cout << " Display of Secondary-array and count" << endl;
-    // for (int i = 0; i < live_counter; i++)
-    // {
-    //     cout<< "(" << sec[i].x << ", " << sec[i].y << "): " << live_count[i] << "\t";
-    // }
-    //cout<< endl;
+    populated_grid(grid, sec, last);
+    fill_nei(grid, sec, last, nei, nei_size);
+    cout << "Display secondary array" << endl;
     display_coordinate_count(grid, sec, last);
-    display_coordinate_count(grid, dead, dead_counter);
-    // cout << " Display of Neighbor-array and count" << endl;
-    //  for (int i = 0; i < dead_counter; i++)
-    //   {
-    //     int dead_neighbors = count_neighbors(grid, dead[i]);
-    //     cout << "(" << dead[i].x << ", " << dead[i].y << "): " << dead_neighbors << "\t";
-        
-    //   }
-    // cout << endl;
-    for (int i = 0; i < 1; i++)
-    {
-        apply_rules(grid, sec, last, dead, dead_counter);
-    }
+    cout << "Display neighbor array" << endl;
+    display_coordinate_count(grid, nei, nei_size);
+    cout << "Display populated grid" << endl;
+    display(grid);
+    simulate_generation(grid, sec, last, nei, nei_size, generation);
      
 }
 
@@ -111,7 +89,7 @@ void read_input_file(string file_name, int grid[GRID_X][GRID_Y], coordinate* sec
             coordinate alive;
             file >> x;
             file >> y;
-            grid[x][y] = 1;
+            //grid[x][y] = 1;
             alive.x = x;
             alive.y = y;
             sec[i] = alive;
@@ -257,18 +235,22 @@ vector<coordinate> apply_rule_overcrowding(int grid[GRID_X][GRID_Y], coordinate 
     return overcrowding_result;
 }
 
-void apply_rules (int grid[GRID_X][GRID_Y], coordinate* sec, int last, coordinate dead[],int &dead_counter)
+void apply_rules (int grid[GRID_X][GRID_Y], coordinate* sec, int last, coordinate nei[],int &nei_size)
 {
-    vector<coordinate> birth_result = apply_rule_birth (grid, dead, dead_counter);
+    vector<coordinate> birth_result = apply_rule_birth (grid, nei, nei_size);
     vector<coordinate> survival_result = apply_rule_survival(grid, sec, last);
     vector<coordinate> loneliness_result =  apply_rule_loneliness(grid, sec, last);
     vector<coordinate> overcrowding_result = apply_rule_overcrowding(grid, sec, last);
     // remove birth from neigbor array
-    delete_elements(birth_result, dead, dead_counter);
+    delete_elements(birth_result, nei, nei_size);
     add_element(sec, last, birth_result);
-    display_coordinates(sec, last);
     // remove dead from secondary array
     delete_elements(loneliness_result, sec, last);
+    // remove all element from nei -array
+    nei_size = 0;
+    //update grid
+    populated_grid(grid, sec, last);
+    display(grid);
     cout << endl; 
 }
 //delete 
@@ -318,4 +300,38 @@ void display_coordinate_count(int grid[GRID_X][GRID_Y], coordinate cord[], int s
         
       }
       cout << endl;
+}
+
+void simulate_generation(int grid[GRID_X][GRID_Y], coordinate sec[], int &last, coordinate nei[], int &nei_size, int generations)
+{
+    for (int i = 0; i < 1; i++)
+    {
+        cout << "Generation " << i + 1 << endl;
+        apply_rules(grid, sec, last, nei, nei_size);
+    }
+    
+}
+
+void populated_grid(int grid[GRID_X][GRID_Y], coordinate sec[], int last)
+{
+    for(int i = 0; i < GRID_X; i++)
+    {
+        for(int j = 0; j < GRID_Y; j++)
+        {
+            grid[i][j] = 0;
+        }
+    }
+    for (int i = 0; i < last; i++)
+    {
+            coordinate alive;
+            grid[sec[i].x][sec[i].y] = 1;
+    }
+}
+
+void fill_nei(int grid[GRID_X][GRID_Y], coordinate sec[], int last, coordinate nei[], int &nei_size)
+{
+    for(int i = 0; i < last; i++) 
+    {
+        find_dead_neihbor(grid, sec[i], nei, nei_size);
+    }
 }
