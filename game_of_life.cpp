@@ -246,11 +246,17 @@ void apply_rules (int grid[GRID_X][GRID_Y], coordinate* sec, int last, coordinat
     add_element(sec, last, birth_result);
     // remove dead from secondary array
     delete_elements(loneliness_result, sec, last);
+    // remove overcrowded
+    delete_elements(overcrowding_result,sec,last);
     // remove all element from nei -array
     nei_size = 0;
     //update grid
     populated_grid(grid, sec, last);
     display(grid);
+    // fill nei array
+    fill_nei(grid, sec, last, nei, nei_size);
+    display_coordinates(sec, last);
+    display_coordinates(nei, nei_size);
     cout << endl; 
 }
 //delete 
@@ -304,7 +310,7 @@ void display_coordinate_count(int grid[GRID_X][GRID_Y], coordinate cord[], int s
 
 void simulate_generation(int grid[GRID_X][GRID_Y], coordinate sec[], int &last, coordinate nei[], int &nei_size, int generations)
 {
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < generations; i++)
     {
         cout << "Generation " << i + 1 << endl;
         apply_rules(grid, sec, last, nei, nei_size);
